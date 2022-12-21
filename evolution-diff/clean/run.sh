@@ -10,8 +10,27 @@
 set -eou pipefail
 
 # gene_lst
-    less /home/user/data2/lit/project/ZNF271/02-APA-1/output/final_list/cds_type.txt | egrep -i 'another|non_coding' \
+    # less /home/user/data2/lit/project/ZNF271/02-APA-1/output/final_list/cds_type.txt | egrep -i 'another|non_coding' \
+    # | cut -f 2 -d ' ' > cds_type_II_III.gene_name.h.lst
+
+    less /home/user/data2/lit/project/ZNF271/02-APA-1/output/final_list/final.txt | egrep -i 'another|non_coding' \
     | cut -f 2 -d ' ' > cds_type_II_III.gene_name.h.lst
+
+    less /home/user/data2/lit/project/ZNF271/02-APA-1/output/final_list/final.txt | egrep -i 'another|non_coding' \
+    | cut -f 3 -d ' ' |sort | uniq -c
+
+    #  3 lncRNA
+    #  21 protein_coding
+    #   2 transcribed_unitary_pseudogene
+
+    less /home/user/data2/lit/project/ZNF271/02-APA-1/output/final_list/final.txt | egrep -i 'another|non_coding' | egrep 'transcribed_unitary_pseudogene|lncRNA' 
+    # res
+        ENSG00000225265.2 TAF1A-AS1 lncRNA Shortening No change non_coding coding
+        ENSG00000225470.9 JPX lncRNA Shortening No change non_coding coding
+        ENSG00000227372.12 TP73-AS1 transcribed_unitary_pseudogene Lengthening No change another protein product coding
+        ENSG00000230487.9 PSMG3-AS1 lncRNA Lengthening No change non_coding coding
+        ENSG00000257267.5 ZNF271P transcribed_unitary_pseudogene Shortening No change non_coding coding
+    #
 #
 
 # softlink
@@ -52,6 +71,7 @@ set -eou pipefail
     # echo -e "ZNF271P\tZfp35\tZNF271" >homolog_identified.txt
     cat ensembl_107_human_mouse_macaque_homology.clean.txt homolog_identified.txt > ensembl_107_human_mouse_macaque_homology.clean.add.txt
 
+    # human mouse macaque
     grep -f cds_type_II_III.gene_name.h.lst -w ensembl_107_human_mouse_macaque_homology.clean.add.txt > homolog.txt
 
     # 17
@@ -69,6 +89,13 @@ set -eou pipefail
     less cds_type_II_III.gene_name.gene_id.r.lst | cut -f 2 -d ' ' > cds_type_II_III.gene_id.r.lst
     sed '1i ENSMMUG00000049532' cds_type_II_III.gene_id.r.lst > cds_type_II_III.gene_id.r.add.lst
     
+#
+
+# homolog in other species (version 2) (version 2 is the same with version 1)
+    grep -f cds_type_II_III.gene_name.h.lst -w human_macaque_ortholog.txt | awk '$3~/ortholog_one2one/'| sort -k1,1 | cut -f2|tr -s '\n'> cds_type_II_III.gene_name.r.lst
+    
+    # human macaque mouse
+    join -1 2 -2 1 <(grep -f cds_type_II_III.gene_name.h.lst -w human_macaque_ortholog.txt | sort -k2,2) <(grep -f cds_type_II_III.gene_name.r.lst -w macaque_mouse_ortholog.txt| sort -k1,1) | awk -F' ' '$3~/ortholog_one2one/ && $5~/ortholog_one2one/ {print $2,$1,$4}' > homolog.v2.txt
 #
 
 # terminal exon annotaion
