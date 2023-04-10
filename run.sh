@@ -20,9 +20,9 @@ set -eou pipefail
     annotation/terminal_exon/PAusage.h.c_anno.bed6+ \
     /home/user/data2/lit/project/ZNF271/02-APA-1" &> log/ref_based_all_1.log &
 
-    # 3'-UTR numbers
-    wc -l /home/user/data2/lit/project/ZNF271/02-APA-1/annotation/terminal_exon/terminal_exon_annotation.ref_based_all_1.txt
-    # 3607
+    # Gene numbers
+    wc -l annotation/terminal_exon/terminal_exon_annotation.ref_based_all_1_loose.txt
+    # 7529
 
 # 3. Plot
     # 3.1 [deprecated] pheatmap output/final_list/final_res_ref_based_all_1.with_geneName.txt | output/R/pheatmap.pdf
@@ -58,6 +58,25 @@ set -eou pipefail
             mkdir /home/user/data2/lit/project/ZNF271/02-APA-1/output/R/CX3CL1/
             Rscript bin/develop_case.R CX3CL1
         #
+        # DUSP11
+            less /home/user/data2/lit/project/ZNF271/02-APA-1/analysis/stringtie_whole_genome_ref_based_all_1/stringtie.rpkm.txt | \
+            grep -w DUSP11> \
+            /home/user/data2/lit/project/ZNF271/02-APA-1/analysis/stringtie_whole_genome_ref_based_all_1/stringtie.rpkm.DUSP11.txt
+            mkdir /home/user/data2/lit/project/ZNF271/02-APA-1/output/R/DUSP11/
+            Rscript bin/develop_case.R DUSP11
+        #
+        # KLF2
+            less /home/user/data2/lit/project/ZNF271/02-APA-1/analysis/stringtie_whole_genome_ref_based_all_1/stringtie.rpkm.txt | \
+            grep -w KLF2> \
+            /home/user/data2/lit/project/ZNF271/02-APA-1/analysis/stringtie_whole_genome_ref_based_all_1/stringtie.rpkm.KLF2.txt
+            mkdir /home/user/data2/lit/project/ZNF271/02-APA-1/output/R/KLF2/
+            Rscript bin/develop_case.R KLF2
+        # GALK2
+            less /home/user/data2/lit/project/ZNF271/02-APA-1/analysis/stringtie_whole_genome_ref_based_all_1/stringtie.rpkm.txt | \
+            grep -w GALK2> \
+            /home/user/data2/lit/project/ZNF271/02-APA-1/analysis/stringtie_whole_genome_ref_based_all_1/stringtie.rpkm.GALK2.txt
+            mkdir /home/user/data2/lit/project/ZNF271/02-APA-1/output/R/GALK2/
+            Rscript bin/develop_case.R GALK2
     #
     # 3.6 cds effect
         run/R/cds.R
@@ -74,6 +93,10 @@ set -eou pipefail
         run/R/cds_m.R
         run/R/cds_r.R
         run/R/cds_compara.R
+
+        # OR
+        cd /home/user/data2/lit/project/ZNF271/02-APA-1/evolution-diff/clean
+        bash run.sh &
     #
 
 
@@ -95,6 +118,9 @@ set -eou pipefail
     run/R/lncRNA.cds.R
     # input: annotation/map/gene_id_vs_transcript_id.txt;annotation/lncRNA_orf_prot_co_filter_genomic.txt
 
+    # 2022/12/21 change
+        bash /home/user/data2/lit/project/ZNF271/02-APA-1/analysis/orf_predict/loose_n_l/run.sh &
+    #
 # 6. [stable] case coverage
     # occupy memory
     # 16min
@@ -150,3 +176,26 @@ set -eou pipefail
         /home/user/data2/lit/project/ZNF271/02-APA-1 \
         bin/terminal_exon_annotation.loose.py" &> log/ref_based_all_1_loose.log &
 #
+
+
+# 11. protein align
+    @ Galaxy
+    /rd1/user/lit/project/271/evolution/protein_align
+#
+
+# 12. GO analysis
+    run/R/GO.R
+
+# 13. Differential analysis
+    # version 1
+        bash -c "time python bin/wilcox_test.py --rpkm analysis/stringtie_whole_genome_ref_based_all_1_loose/stringtie.rpkm.txt \
+        --output output/final_list/final_res_ref_based_all_1_loose.txt" &>log/wilcox.ref_based_all_1_loose.log 
+
+        python bin/add_gene_name.py \
+        --vs annotation/map/ensembl_gene_id_type_symbol.txt \
+        --file output/final_list/final_res_ref_based_all_1_loose.txt
+    # version 2
+        Rscript bin/wilcox_test.R analysis/stringtie_whole_genome_ref_based_all_1_loose/stringtie.rpkm.txt &
+        python bin/add_gene_name.py \
+        --vs annotation/map/ensembl_gene_id_type_symbol.txt \
+        --file output/final_list/res.rm_outlier.txt

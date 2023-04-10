@@ -108,7 +108,7 @@ encode_bed=BedTool.from_dataframe(encode_anno)
 iso_bed=BedTool.from_dataframe(pa_anno)
 len(encode_bed)
 # intersect
-iso_and_encode=iso_bed.intersect(encode_bed,wa=True,wb=True)
+iso_and_encode=iso_bed.intersect(encode_bed,wa=True,wb=True,s=True)
 iso_and_encode_df=iso_and_encode.to_dataframe(header=None)
 # some genes may overlap
 iso_and_encode_df=iso_and_encode_df[iso_and_encode_df.iloc[:,3]==iso_and_encode_df.iloc[:,10]]
@@ -161,3 +161,6 @@ m_g_m
 m_g_m.to_csv(args.work_path+"/"+args.t_e_out,sep="\t",header=0,index=0)
 
 
+# %% how many isoforms
+tmp=pd.merge(iso_and_encode_df,m_g_m.iloc[:,0],on='gene_id',how='inner')
+tmp.to_csv("/home/user/data2/lit/project/ZNF271/02-APA-1/output/final_list/pa_isoforms_study.txt",sep="\t",header=1,index=0)

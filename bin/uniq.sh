@@ -9,6 +9,8 @@
 
 set -eou pipefail
 
+# for sorted bams
+
 # absolute path of bams (mapped bams)
 bam_lst=$1
 # thread number
@@ -18,5 +20,8 @@ output_dir=$3
 
 for bam in $(cat $bam_lst);do
 sample=$(basename $bam|sed 's/.bam//g')
-samtools view -@ $thread_n -q 60 -bhu $bam | samtools sort -@ $thread_n -o $output_dir/$sample.uniq.sorted.bam -
+echo "extract uniq reads of ${sample}..."
+# samtools view -@ $thread_n -q 60 -bhu $bam | samtools sort -@ $thread_n -o $output_dir/$sample.uniq.sorted.bam -
+# for m and r uniq,  no need to sort
+samtools view -@ $thread_n -q 60 -bhu -o $output_dir/$sample.uniq.bam $bam
 done

@@ -14,27 +14,34 @@ iso_anno=$2
 work_path=$3
 # add in 2022/12/20
 terminal_exon_annotation_script=$4
+# add in 2023/02/14
+genePredExt=$5
+# add in 2023/02/15
+script_path=$6
 
 # 1. get processed terminal exon annoataion
     python $terminal_exon_annotation_script \
-    --t_e annotation/terminal_exon/gencode.v41.basic.annotation.terminal_exon.genePredExt \
+    # --t_e annotation/terminal_exon/gencode.v41.basic.annotation.terminal_exon.genePredExt \
+    --t_e $genePredExt \
     --iso_anno $iso_anno \
     --t_e_out annotation/terminal_exon/terminal_exon_annotation.$suffix.txt \
     --work_path $work_path
 
 # 2. format to gtf 
-    bash bin/proximal_distal_gtf.sh annotation/terminal_exon/terminal_exon_annotation.$suffix.txt
+    bash $script_path/bin/proximal_distal_gtf.sh $work_path/annotation/terminal_exon/terminal_exon_annotation.$suffix.txt
 
 # 3. stringtie call rpkm
-    bash -c "time bash bin/stringtie.universal.sh annotation/terminal_exon/terminal_exon_annotation.$suffix.gtf \
+    bash -c "time bash $script_path/bin/stringtie.universal.sh $work_path/annotation/terminal_exon/terminal_exon_annotation.$suffix.gtf \
     analysis/stringtie_whole_genome_$suffix \
     frag_filter" &>log/stringtie_whole_genome_$suffix.log 
 
 # 4. wilcox test
-    bash -c "time python bin/wilcox_test.py --rpkm analysis/stringtie_whole_genome_$suffix/stringtie.rpkm.txt \
-    --output output/final_list/final_res_$suffix.txt" &>log/wilcox.$suffix.log 
+    # bash -c "time python bin/wilcox_test.py --rpkm analysis/stringtie_whole_genome_$suffix/stringtie.rpkm.txt \
+    # --output output/final_list/final_res_$suffix.txt" &>log/wilcox.$suffix.log 
+    echo "Wilcoxon test [Figure 1B]"
+    Rscript $script_path/bin/wilcox_test.R analysis/stringtie_whole_genome_$suffix/stringtie.rpkm.txt
 
-# 5. add gene name
-    python bin/add_gene_name.py \
-    --vs annotation/map/ensembl_gene_id_type_symbol.txt \
-    --file output/final_list/final_res_$suffix.txt
+# # 5. add gene name
+#     python bin/add_gene_name.py \
+#     --vs annotation/map/ensembl_gene_id_type_symbol.txt \
+#     --file output/final_list/final_res_$suffix.txt

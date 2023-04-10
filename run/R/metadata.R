@@ -45,11 +45,10 @@ libSize <- read.table("/home/user/data/lit/project/ZNF271/data/rna-seq/brain/map
 colnames(libSize) <- c("sample","mapped_reads")
 libSize$sample <- gsub("E-MTAB-6814.","",libSize$sample) %>% gsub(".sorted","",.)
 
-
-  
-
-merge(libSize,metadata_period,by= "sample") %>% group_by(period.abbre.abbre) %>% summarise(mapped_reads_s=sum(mapped_reads)/10^6)->tmp_1
+##### libsize of merged samples #####
+fil <- filter(frag_score,frag_score>=0.885) %>% select(sample)  
+merge(libSize,metadata_period,by= "sample") %>% merge(fil,"sample") %>% group_by(period.abbre.abbre) %>% summarise(mapped_reads_s=sum(mapped_reads)/10^6)->tmp_1
 colnames(tmp_1) <- c("period","mapped_reads_s")
-merge(libSize,metadata_period,by= "sample") %>% group_by(period) %>% summarise(mapped_reads_s=sum(mapped_reads)/10^6) ->tmp_2
+merge(libSize,metadata_period,by= "sample") %>% merge(fil,"sample") %>% group_by(period) %>% summarise(mapped_reads_s=sum(mapped_reads)/10^6) ->tmp_2
 rbind(tmp_1[1,],tmp_2) %>% 
 write.table(.,file = "/home/user/data/lit/project/ZNF271/data/rna-seq/brain/mapped_m_read_period.txt",quote = FALSE,sep = '\t',row.names = FALSE)

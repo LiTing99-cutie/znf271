@@ -1,7 +1,6 @@
 # args <- commandArgs(TRUE)
 # 1 PAusage.type_II.fil.bed6+
 
-rm(list=ls())
 suppressMessages(library(tidyfst))
 suppressMessages(library(tibble))
 suppressMessages(library(dplyr))

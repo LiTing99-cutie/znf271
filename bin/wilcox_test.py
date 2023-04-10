@@ -113,9 +113,9 @@ for i in array:
     pau_a=final[(final.gene_id==i) & (final["period.abbre.abbre"]=="After birth")].pau
     rpkm_pro_b=final[(final.gene_id==i) & (final["period.abbre.abbre"]=="Before birth")].rpkm_pro
     rpkm_pro_a=final[(final.gene_id==i) & (final["period.abbre.abbre"]=="After birth")].rpkm_pro    
-    if len(pau_a)>=1 and len(pau_b)>=1:
+    if len(pau_a)>=3 and len(pau_b)>=3:
         sta_res.append([i,ss.mannwhitneyu(pau_b,pau_a,use_continuity=True).pvalue,pau_a.median(),pau_b.median(),
-        ss.mannwhitneyu(rpkm_pro_b,rpkm_pro_a,use_continuity=True).pvalue,rpkm_pro_a.median(),rpkm_pro_b.median()])
+        ss.mannwhitneyu(rpkm_pro_b,rpkm_pro_a,use_continuity=True).pvalue,rpkm_pro_a.mean(),rpkm_pro_b.mean()])
 # 2022-11-23
 # sta_res=pd.DataFrame(sta_res,columns=["gene_id","pvalue","pau_a","pau_b","p_value_1","rpkm_pro_a","rpkm_pro_b"])
 sta_res=pd.DataFrame(sta_res,columns=["gene_name","pvalue","pau_a","pau_b","p_value_1","rpkm_pro_a","rpkm_pro_b"])

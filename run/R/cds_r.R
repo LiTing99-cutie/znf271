@@ -1,11 +1,10 @@
 
 
-rm(list=ls())
-library(tidyfst)
-library(tibble)
-library(dplyr)
-library(ggplot2)
-library(ggpubr)
+suppressMessages(library(tidyfst))
+suppressMessages(library(tibble))
+suppressMessages(library(dplyr))
+suppressMessages(library(ggplot2))
+suppressMessages(library(ggpubr))
 setwd("/home/user/data2/lit/project/ZNF271/02-APA-1")
 
 # PA site location bed 

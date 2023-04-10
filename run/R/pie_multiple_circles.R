@@ -1,5 +1,5 @@
 
-
+rm(list=ls())
 
 library(data.table)
 library(ggplot2)
@@ -91,15 +91,13 @@ if(F){
 }
 
 
-if(F){
+if(T){
   typeIIAndIII <- fread(file="output/final_list/typeIIAndIII.txt")
   typeIIAndIII_n <- nrow(typeIIAndIII)
   typeI_n <- nrow(res[res$sig_1=="NotSig" & res$sig=="Sig"])-typeIIAndIII_n
   
   res$cds[res$gene_name %in% typeIIAndIII$gene_name] <- "disrupt"
   res$cds[!res$gene_name %in% typeIIAndIII$gene_name] <- "not disrupt"
-  
-  
   
   df1 <- data.frame(table(res$sig_1))
   df1$Var1 <- factor(df1$Var1,levels = c("Sig","NotSig"))
