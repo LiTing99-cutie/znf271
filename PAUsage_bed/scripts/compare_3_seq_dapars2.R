@@ -4,6 +4,15 @@ args=commandArgs(T)
 source("/home/user/data2/lit/bin/lit_utils.R")
 lib()
 
+args=commandArgs(T)
+
+if(is.na(args[1])){
+  args <- c()
+  args[1] <- "/home/user/data2/lit/project/ZNF271/02-APA-1/PAUsage_bed/output/intersect.txt"
+  args[2] <- "/home/user/data2/lit/project/ZNF271/02-APA-1/PAUsage_bed/output/"
+
+}
+
 res <- fread(args[1])
 
 data.frame(name=c("PolyASite","DaPars2"),per=c(res$inter_2_1/res$n_2,res$inter_2_3/res$n_2)) -> i

@@ -1,3 +1,5 @@
+source("/home/user/data2/lit/bin/lit_utils.R")
+lib()
 args=commandArgs(T)
 
 # 1 file

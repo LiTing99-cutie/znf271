@@ -10,7 +10,8 @@ if(is.na(args[1])){
   args[3] <- "/home/user/data2/lit/project/ZNF271/02-APA-1/PAUsage_bed/output/pro_dis_bin.txt"
   args[4] <- "/home/user/data2/lit/project/ZNF271/02-APA-1/PAUsage_bed/output/do_te_pas.txt"
   args[5] <- "/home/user/data2/lit/project/ZNF271/02-APA-1/PAUsage_bed/output/do_te_fil.bed"
-  args[6] <- "/home/user/data2/lit/project/ZNF271/02-APA-1/PAUsage_bed/output/"
+  args[6] <- "/home/user/data2/lit/project/ZNF271/02-APA-1/PAUsage_bed/output/lncRNA_cds_s_e.txt"
+  args[7] <- "/home/user/data2/lit/project/ZNF271/02-APA-1/PAUsage_bed/output/"
 }
 
 # function
@@ -102,9 +103,13 @@ transcript_fil <- fread(args[2])
 pro_dis_bin <- fread(args[3])
 do_te_pas <- fread(args[4])
 do_te <- fread(args[5])
-
+lncRNA_cds_s_e <- fread(args[6])
 # filter cds annotation
 gpe %>% select(V2,V6,V7,V1,V12,V3) -> cds_s_e
+colnames(lncRNA_cds_s_e) <- colnames(cds_s_e)
+cds_s_e$V12 %in% lncRNA_cds_s_e$V12 -> fil
+cds_s_e <- cds_s_e[!fil]
+cds_s_e <- rbind(cds_s_e,lncRNA_cds_s_e)
 cds_s_e$V1 %in% transcript_fil$transcript_id -> fil
 
 # [optional] classify transcripts with dominant terminal exons into coding, coding upstream of te and no-coding based on public annotation
@@ -126,7 +131,7 @@ cds_s_e_fil %>% filter(V6!=V7) -> cds_s_e_fil_coding
 rbind(fwd("+"),rvs("-")) -> res
 
 # write
-filepath <- paste0(args[6],"/disrupt_cds_pro_pa.txt")
+filepath <- paste0(args[7],"/disrupt_cds_pro_pa.txt")
 fwrite_c(res,filepath)
 
 

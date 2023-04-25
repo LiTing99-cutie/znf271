@@ -1,9 +1,11 @@
 #! /bin/sh
 
-script_path=/home/user/data2/lit/project/ZNF271/02-APA-1/PAUsage_bed/scripts
-pro_dis_bin=/home/user/data2/lit/project/ZNF271/02-APA-1/PAUsage_bed/output/pro_dis_bin.txt
-map=/home/user/data2/lit/project/ZNF271/02-APA-1/annotation/map/ensembl_gene_id_type_symbol.txt
-output_path=/home/user/data2/lit/project/ZNF271/02-APA-1/PAUsage_bed/output/predict
+script_path=/home/user/data2/lit/project/ZNF271/02-APA-1/PAUsage_bed/analysis_mouse/scripts
+pro_dis_bin=output/pro_dis_bin.txt
+map=output/transcript_id_chr_strand_symbol.txt
+output_path=output/predict
+archive=$1
+species=$2
 
 source activate base
 
@@ -16,7 +18,7 @@ $output_path
 pushd $output_path
 
 ### get fasta ###
-ipython -c "%run $script_path/get_fasta.ipynb --input_file to_predict_gene_id.txt --output_path cdna"
+python3 $script_path/get_fasta.py --input to_predict_gene_id.txt --output cdna --archive $archive --species $species
 #
 
 ### get orf ###
@@ -32,9 +34,10 @@ less lncRNA_orf_prot.fa | grep '>' | sed 's/>//g;s/\[//g;s/\]//g;s/-//g' | sed '
 join -1 2 -2 1 <(sort -k1,1 -u lncRNA_orf_prot_len_filter.txt|sort -k2,2) lncRNA_orf_prot_co.txt | awk -F " " -v OFS='\t' '{split($1,x,".");print x[1],$2,$4,$5,$3,$6}'>lncRNA_orf_prot_co_filter.txt
 #	
 # get genomic position	
-ipython -c "%run $script_path/cds_p_to_genomic_p.ipynb"
+python3 $script_path/cds_p_to_genomic_p.py --archive $archive --species $species
 #
 
 # output
-Rscript /home/user/data2/lit/project/ZNF271/02-APA-1/PAUsage_bed/scripts/lncRNA.cds.R
+popd
+Rscript ../scripts/lncRNA.cds.R "output/predict/lncRNA_orf_prot_co_filter_genomic.txt" "$map" "output"
 #

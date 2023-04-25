@@ -22,6 +22,7 @@ rpkm_dis <- rpkm[index,]
 #### Read metadata ####
 metadata=fread(args[2])
 frag_score=fread(args[3],sep='\t')
+colnames(frag_score) = c("sample","frag_score")
 #### Merge ####
 merge(metadata,frag_score) %>% filter(frag_score>0.885) -> md
 # see if fragmentation score of embryo or postnatal groups have significant difference

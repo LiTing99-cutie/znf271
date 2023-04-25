@@ -20,9 +20,9 @@ set -eou pipefail
     cp $script_path/run/R/ScatterPlot_c.R scripts/ScatterPlot.R
     cp $script_path/run/R/pie_multiple_circles_c.R scripts/pie_multiple_circles.R
     cp $script_path/run/R/GO_c.R scripts/GO.R
-    cp /home/user/data2/lit/project/ZNF271/02-APA-1/analysis/supple/miRNA/run.R scripts/miRNA.R
-
-
+    cp $script_path/analysis/supple/miRNA/run.R scripts/miRNA.R
+    cp $script_path/bin/wilcox_test.R scripts/wilcox_test.R
+    cp $script_path/bin/develop_case.R scripts/develop_case.R
 ## prepare some files
     less $project_path/annotation/gencode.v41.basic.annotation.gpe |\
     cut -f 1,2,3,12 > $project_path/annotation/map/transcript_id_chr_strand_symbol.txt
@@ -37,12 +37,20 @@ set -eou pipefail
     /home/user/data3/lit/project/ZNF271/data/rna-seq/brain/uniq/rhesus 25 rhesus_brain \
     /home/user/data2/lit/project/ZNF271/02-APA-1/PAUsage_bed/output_r \
     /home/user/data/lit/database/in_house/rheMac10Plus/rheMac10Plus.addgeneName.gpe &>log/frag.rhesus_brain.time.log &
+    cp output_r/* /home/user/data3/lit/project/ZNF271/data/rna-seq/brain/metadata/rhesus && rm -rf output_r 
+    cp output_m/* /home/user/data3/lit/project/ZNF271/data/rna-seq/brain/metadata/mouse && rm -rf output_m
+
+    nohup bash /home/user/data2/lit/project/ZNF271/02-APA-1/PAUsage_bed/scripts/fragmention.sh \
+    /home/user/data3/lit/project/ZNF271/data/rna-seq/brain/uniq/r10/ 48 r10_brain \
+    /home/user/data3/lit/project/ZNF271/data/rna-seq/brain/metadata/r10/ \
+    /home/user/data2/lit/project/ZNF271/02-APA-1/annotation/rhesus/rheMac10/Macaca_mulatta.Mmul_10.107.ucsc.gpe &>log/frag.r10_brain.time.log &
 
 ## define variables
     script_path=/home/user/data2/lit/project/ZNF271/02-APA-1/
     project_path=/home/user/data2/lit/project/ZNF271/02-APA-1/
 
 # 1. get human terminal exons
+bash scripts/Step_1_te_backbone.sh
     # extract chr,strand,terminal exon start,terminal exon end,ensembl gene id
     cd $project_path/
     gtfToGenePred -genePredExt -geneNameAsName2 annotation/gencode.v41.basic.annotation.gtf.gz annotation/gencode.v41.basic.annotation.gpe
@@ -51,61 +59,65 @@ set -eou pipefail
     else {split($9,x,",");split($10,y,",");print $2,$3,x[1],y[1],$12,$1}}' | \
     sort -k4,4 > annotation/terminal_exon/gencode.v41.basic.annotation.terminal_exon.genePredExt
 
-    Rscript scripts/dominant_te.R
-    Rscript scripts/all.exon.R
-    Rscript scripts/dominant_te_inter_other_trans.R &> log/dominant_te_inter_other_trans.log
-    Rscript scripts/dominant_te_fil.R
-
+    # Rscript scripts/dominant_te.R
+    # Rscript scripts/all.exon.R
+    # Rscript scripts/dominant_te_inter_other_trans.R &> log/dominant_te_inter_other_trans.log
+    # Rscript scripts/dominant_te_fil.R
     Rscript scripts/dominant_te.R
     Rscript scripts/all_exon.sh
     Rscript scripts/dominant_te_inter_other_trans_other_gene.R
+#
+# 1.1. human PAS
+bash scripts/Step_1_1_cutoff_filter_compare.sh
+    ## motif (3 species)
 
-# 2. human PAS
+    # Galaxy: /rdq/user/lit/project/271/PA/analysis/motif
 
-## motif (3 species)
-# Galaxy: /rdq/user/lit/project/271/PA/analysis/motif
+    ## select cutoff 
+    Rscript scripts/cutoff_pas.R
 
-## compare with 3'-seq and dapars2
-bash scripts/compare_3_seq_dapars2.sh
-scripts/compare_3_seq_dapars2.R
+    ## filter
+    Rscript scripts/fil.PAS.R
 
-# 3. PAS map to backbone
-
-## Select PAS cutoff
-scripts/cutoff_pas.R
-scripts/fil.PAS.R
+    ## compare with 3'-seq and dapars2
+    bash scripts/compare_3_seq_dapars2.sh
+    Rscript scripts/compare_3_seq_dapars2.R
+#
+# 2. PAS map to backbone
 ## Map
-scripts/pas_map.R
+bash scripts/Step_2_pas_map_to_backbone.sh
+    Rscript scripts/pas_map.R
+#
+# 3. RNA-seq quantification [take time]
+nohup bash scripts/Step_3_RNA_seq.sh &> log/Step_3_RNA_seq.log &
+    ## GTF
+    tail -n +2 output/pro_dis_bin.txt >  output/pro_dis_bin.nh.txt
+    bash $script_path/bin/proximal_distal_gtf.sh output/pro_dis_bin.nh.txt
+    ## stringtie
+    nohup bash -c "time bash $script_path/bin/stringtie.universal.sh \
+    output/pro_dis_bin.nh.gtf \
+    output/stringtie \
+    frag_filter" &>log/stringtie.log &
+    ## Wilcoxon test 
+    cp $script_path/bin/wilcox_test.R scripts/wilcox_test.R
+    nohup Rscript scripts/wilcox_test.R &
+#
+# 3.1. Proximal PAS disrupt cds [take time]
+nohup bash -c "time bash scripts/Step_3_1_disrupt_cds.sh" &> log/Step_3_1_disrupt_cds.log &
+    ## Predict lncRNA cds region
+    bash scripts/lncRNA.sh
+    Rscript scripts/get_fasta.ipynb
+    Rscript scripts/cds_p_to_genomic_p.ipynb
+    Rscript scripts/lncRNA.cds.R
 
-# 4. Proximal PAS disrupt cds
-## Predict lncRNA cds region
-scripts/lncRNA.sh
-scripts/get_fasta.ipynb
-scripts/cds_p_to_genomic_p.ipynb
-scripts/lncRNA.cds.R
-
-## Annotate proximal PAS
-Rscript $project_path/PAUsage_bed/scripts/cds_anno.R
-## Proximal PAS supported
-bash $project_path/PAUsage_bed/scripts/proximal_pas_supported.sh
-
-# 5. RNA-seq quantification
-## GTF
-tail -n +2 output/pro_dis_bin.txt >  output/pro_dis_bin.nh.txt
-bash $script_path/bin/proximal_distal_gtf.sh output/pro_dis_bin.nh.txt
-## stringtie
-nohup bash -c "time bash $script_path/bin/stringtie.universal.sh \
-output/pro_dis_bin.nh.gtf \
-output/stringtie \
-frag_filter" &>log/stringtie.log &
-## Wilcoxon test 
-cp $script_path/bin/wilcox_test.R scripts/wilcox_test.R
-nohup Rscript scripts/wilcox_test.R &
-
-# 6. Description analysis and functional set
+    ## Annotate proximal PAS
+    Rscript $project_path/PAUsage_bed/scripts/cds_anno.R
+    ## Proximal PAS supported
+    bash $project_path/PAUsage_bed/scripts/proximal_pas_supported.sh
+#
+# 4. Description analysis and functional set
 ## Scatter plot
 scripts/ScatterPlot.R
-
 
 ## Pie plot
 scripts/pie_multiple_circles.R
@@ -125,9 +137,20 @@ scripts/miRNA.R
 
 # 7. case
 
-## case APA (three species)
+## case APA and coverage
+Rscript scripts/develop_case.R "$PWD/output/stringtie/stringtie.rpkm.txt" \
+"/home/user/data3/lit/project/ZNF271/data/rna-seq/brain/metadata/human.metadata.clean.txt" \
+"/home/user/data/lit/project/ZNF271/data/rna-seq/brain/frag_score.txt" \
+"ZNF271P" \
+"$PWD/output/"
 
+nohup bash scripts/visual_normalized_bam_h_m.sh &>log/visual_normalized_bam_h_m.log &
+nohup bash scripts/visual_normalized_bam_m_r.sh &>log/visual_normalized_bam_m_r.log &
 ## case fetal expression
 
 ## case multiple tissue PDUI
 /home/user/data2/lit/project/ZNF271/02-APA-1/analysis/supple/znf271_apa_mul_tissue
+
+# 8.adjust the directory structure
+cp -r mouse analysis_mouse && rm -rf mouse/
+cp -r macaque analysis_rhesus && rm -rf macaque/
